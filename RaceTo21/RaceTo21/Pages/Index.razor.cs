@@ -94,7 +94,8 @@ namespace RaceTo21.Pages
                 if (Players.All(x => x.Status != PlayerStatus.active))
                 {
                     //有手牌情况下 都不摸牌 比分数
-                    var winner = Players.OrderByDescending(x => x.Score).FirstOrDefault();
+                    Console.WriteLine("-----");
+                    var winner = Players.Where(a=>a.Status == PlayerStatus.stay).OrderByDescending(x => x.Score).FirstOrDefault();
                     winner.Chip += chipSum;
                     winner.Status = PlayerStatus.win;
                     tips = $"玩家{winner.Name}获胜";
@@ -176,8 +177,8 @@ namespace RaceTo21.Pages
                 }
                 else
                 {
-                    //判断如果只有一个人要牌 这个人直接获得本轮胜利
-                    if (Players.Where(x => x.Status == PlayerStatus.active).Count() == 1)
+                    //判断如果只有一个人要牌 并且场上没有其他人是stay 这个人直接获得本轮胜利
+                    if (Players.Where(x => x.Status == PlayerStatus.active).Count() == 1 && Players.Any(x=>x.Status != PlayerStatus.stay))
                     {
                         var thisWinner = Players.Find(x => x.Status == PlayerStatus.active);
                         tips = $"只有玩家{thisWinner.Name}要牌，该玩家本轮获胜";

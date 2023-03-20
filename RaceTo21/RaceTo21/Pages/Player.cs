@@ -18,7 +18,7 @@ namespace RaceTo21.Pages
         /// <summary>
         /// 状态active0,stay1,bust2,win3,leave4
         /// </summary>
-        public PlayerStatus Status{set;get;}
+        public PlayerStatus Status{set;get;} = PlayerStatus.bust;
 
         /// <summary>
         /// 累计点数

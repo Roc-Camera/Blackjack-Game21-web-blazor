@@ -57,7 +57,7 @@
                             <div style="margin-right:10px;">未下注</div>
                         }
                     </div>
-                    <Button OnClick="() => {item.Chip -= currentBet;chipSum += currentBet;item.IsBet = true;}" Disabled="@(isBet || item.IsBet == true)">下注</Button>
+                    <Button OnClick="() => {item.Chip -= currentBet;chipSum += currentBet;item.IsBet = true;item.Status = PlayerStatus.active;}" Disabled="@(isBet || item.IsBet == true)">下注</Button>
                 </div>
                 @if (item.HandCards != null)
                 {
