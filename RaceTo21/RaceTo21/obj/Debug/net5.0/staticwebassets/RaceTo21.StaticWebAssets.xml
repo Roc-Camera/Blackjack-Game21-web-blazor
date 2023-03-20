@@ -1,0 +1,5 @@
+﻿<StaticWebAssets Version="1.0">
+  <ContentRoot BasePath="/" Path="C:\Users\Peipa\Desktop\coding\RaceTo21\RaceTo21\RaceTo21\bin\Debug\net5.0\wwwroot\" />
+  <ContentRoot BasePath="/" Path="C:\Users\Peipa\Desktop\coding\RaceTo21\RaceTo21\RaceTo21\obj\Debug\net5.0\scopedcss\bundle\" />
+  <ContentRoot BasePath="_content/AntDesign" Path="C:\Users\Peipa\.nuget\packages\antdesign\0.14.4\build\..\staticwebassets\" />
+</StaticWebAssets>

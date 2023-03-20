@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\RaceTo21.props" />
+</Project>

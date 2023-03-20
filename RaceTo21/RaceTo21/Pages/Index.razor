@@ -1,0 +1,211 @@
+﻿@page "/"
+@inject IMessageService _message
+<Modal Title="@("请输入玩家人数")"
+       Visible="@_visible"
+       OnOk="HandleOk"
+       OnCancel="GameOver">
+    <AntDesign.InputNumber Style="width:400px" @bind-Value="playerNum" Min="1" Max="10" PlaceHolder=""></AntDesign.InputNumber>
+</Modal>
+<div style="@_startGameVisible">
+    @foreach (var item in Players)
+    {
+        <Input Placeholder="@($"请输入玩家{item.Id}的姓名")" @bind-Value="item.Name" />
+    }
+    <div style="display:flex;">
+        <Button OnClick="StartGame">开始游戏</Button>
+        <span @onclick="()=>ruleModel=!ruleModel" style="cursor: pointer">
+            <Alert Type="@AlertType.Warning" Message="游戏规则" ShowIcon="true" Style="padding:4px 15px;margin:0 10px;"/>
+        </span>
+    </div>
+</div>
+@*开始游戏后*@
+@if (_startGameVisible == "display:none;")
+{
+    foreach (var item in Players)
+    {
+        <div style="display:flex;justify-content:space-between;height:100px;background-color:rgb(11,153,33);border-bottom:2px solid #000;">
+            <div style="display:flex;font-size:24px;font-weight:700">
+                <div>
+                    <div style="color:#fff;display:flex;align-items:center;">
+                        @if (item.Status == PlayerStatus.win)
+                        {
+                            <Icon Type="crown" Theme="twotone" TwotoneColor="#ffe58f" />
+                        }
+                        else
+                        {
+                            <Icon Type="user" Theme="outline" />
+                        }
+                        <div style="margin-right:10px;">
+                            @(
+                                $"玩家{item.Id}:{item.Name}"
+                                )
+                        </div>
+                        <Icon Type="dollar" Theme="twotone" TwotoneColor="#ffe58f" />
+                        <div style="margin-right:10px;">
+                            @(
+                                $"剩余筹码:{item.Chip}"
+                                )
+                        </div>
+                        @if (item.IsBet)
+                        {
+                            <Icon Type="check-circle" Theme="twotone" TwotoneColor="#52c41a" />
+                            <div style="margin-right:10px;">已下注</div>
+                        }
+                        else
+                        {
+                            <Icon Type="stop" Theme="twotone" TwotoneColor="#eb2f96" />
+                            <div style="margin-right:10px;">未下注</div>
+                        }
+                    </div>
+                    <Button OnClick="() => {item.Chip -= currentBet;chipSum += currentBet;item.IsBet = true;}" Disabled="@(isBet || item.IsBet == true)">下注</Button>
+                </div>
+                @if (item.HandCards != null)
+                {
+                    foreach (var i in item.HandCards)
+                    {
+                        var imgurl = $"images/card_{i.Suit}_{i.CardName}.png";
+                        <div style="margin-right:5px;">
+                            <img src="@imgurl" />
+                        </div>
+                    }
+                }
+            </div>
+            <div>
+                <div style="font-size:16px;font-weight:bold;margin-right:8px;text-align:center">@($"{item.Score}/21")</div>
+                @if (item.Status == PlayerStatus.active)
+                {
+                    <Tag Color="@PresetColor.Green.ToString()">active</Tag>
+                }
+                else if (item.Status == PlayerStatus.stay)
+                {
+                    <Tag Color="@PresetColor.Blue.ToString()">stay</Tag>
+                }
+                else if (item.Status == PlayerStatus.bust)
+                {
+                    <Tag Color="@PresetColor.Red.ToString()">bust</Tag>
+                }
+                else if (item.Status == PlayerStatus.win)
+                {
+                    <Tag Color="@PresetColor.Gold.ToString()">win</Tag>
+                }
+                else
+                {
+                    <Tag Color="default">leave</Tag>
+                }
+            </div>
+        </div>
+
+    }
+    <div style="background-color:rgb(11,153,33);border-bottom:2px solid #000;display:flex;">
+        <div>
+            <h3 style="color:#fff;">@($"回合:{round}")</h3>
+            <h3 style="color:#fff;">@($"每次下注:{currentBet}")</h3>
+            <h3 style="color:#fff;">@($"本场总筹码:{chipSum}")</h3>
+            @if (isDeal == 0)
+            {
+                <Button OnClick="InquireDeal" Disabled="@(chipSum == 0)">开始发牌</Button>
+            }
+            else if (isDeal == 1)
+            {
+                <Button OnClick="NextDeal">继续发牌</Button>
+            }
+            else if (isDeal == 2)
+            {
+                <Button OnClick="NextRoundClick">开始新一轮</Button>
+            }
+            else if (isDeal == 3)
+            {
+                <Button OnClick="GetResult">查看最终游戏结果</Button>
+            }
+            else if (isDeal == 4)
+            {
+                <Button OnClick="NewGame">开始新游戏</Button>
+            }
+        </div>
+        <div style="font-size:24px;font-weight:700;color:#fff;">
+            @tips
+        </div>
+    </div>
+}
+
+<Modal Visible="@_dealVisible"
+       OnOk="@DealOk"
+       OnCancel="@DealCancel">
+    @foreach (var item in Players)
+    {
+        //下赌注了才问要不要牌
+        if (item.IsBet == true)
+        {
+            if (item.Status == PlayerStatus.active || item.Status == PlayerStatus.stay)
+            {
+                <div>
+                    @($"玩家{item.Name}需要牌吗?")
+                    <RadioGroup @bind-Value="item.Status">
+                        <Radio TValue="PlayerStatus" Value="PlayerStatus.active">Yes</Radio>
+                        <Radio TValue="PlayerStatus" Value="PlayerStatus.stay">No</Radio>
+                    </RadioGroup>
+                </div>
+            }
+        }
+    }
+</Modal>
+@{
+    RenderFragment cautionFooter =
+    @<Template>
+        <Button Block Type="@ButtonType.Primary" OnClick="@(()=>ruleModel= !ruleModel)">
+            <text>知道了</text>
+        </Button>
+    </Template>;
+}
+<Modal Width="690" Visible="ruleModel" Footer="@cautionFooter" Centered Closable="false">
+    <section style="display:flex;flex-direction:column;align-items:center;">
+        <Title Level="4">游戏详细规则，请认真阅读</Title>
+        <div style="width:100%;display:flex;justify-content: space-around;">
+            <div style="width:300px;height:36px;background: #0c61ff;color:white;text-align:center;font-size:16px;line-height: 36px;">游戏总体流程</div>
+            <div style="width:300px;height:36px;background:#ff550c;color:white;text-align:center;font-size:16px;line-height: 36px;">游戏获胜条件</div>
+        </div>
+        <div style="width:100%;height: 400px;overflow:auto;">
+            <div style="display:flex;width:100%;justify-content: space-between;color:#333;">
+                <section style="width:300px;margin-left:-16px;">
+                    <ol>
+                        <br />
+                        <li>一局游戏分为三轮，三轮后得分最高者胜。</li>
+                        <br />
+                        <li>游戏开始，输入参与游戏的玩家数量后，即可输入每个玩家的名字</li>
+                        <br />
+                        <li>输入玩家名字后即可开始游戏。</li>
+                        <br />
+                        <li>
+                            玩家可以选择下注，也可以不下注，下注每轮最多只能点击一次。
+                            <span style="color:#0C61FF;">但所有玩家中每轮必须有一个玩家下注，否则游戏无法开始。</span>
+                            下注后会扣除相应的筹码。
+                        </li>
+                        <br />
+                        <li>进入开始发牌阶段，玩家可以根据自身所获得分数选择是否要牌。</li>
+                        <br />
+                        <li>分数最先等于21分的玩家获得该轮胜利，超过21分会<span style="color:darkred;">爆牌</span>。</li>
+                        <br />
+                        <li>每一轮下注筹码会更多，具体是每轮加十。</li>
+                        <br />
+                        <li>2-10分别对应2-10分，A对应1分，JQK对应10分。</li>
+                        <br />
+                        <li>场上的所有筹码数为每个玩家下注的总和，每轮获胜者同时获得场上的所有筹码</li>
+                    </ol>
+                </section>
+                <section style="width:300px;margin-right:20px;">
+                    <ol>
+                        <br />
+                        <li>如果一轮中只有一个玩家选择要牌，这名玩家将会获得本轮胜利。</li>
+                        <br />
+                        <li>如果大家都爆牌 ，则最后爆牌的玩家会获得本轮胜利。</li>
+                        <br />
+                        <li>最先等于21分的玩家会获得本轮胜利。</li>
+                        <br />
+                        <li>三轮结束后，自身筹码最多的玩家会获得最终胜利</li>
+                    </ol>
+                </section>
+            </div>
+            
+        </div>
+    </section>
+</Modal>
